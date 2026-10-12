@@ -1,0 +1,151 @@
+@model AcxiomCRM.ViewModels.LeadFormViewModel
+@{
+    ViewData["Title"] = "Capture New Lead";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <a asp-action="Index" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-1">
+                    <i class="bi bi-arrow-left"></i> Back to Leads
+                </a>
+                <h2 class="fw-bold text-dark mb-0">Capture Sales Lead</h2>
+            </div>
+        </div>
+
+        <div class="crm-card">
+            <div class="crm-card-header">
+                <div>
+                    <h5 class="crm-card-title">Prospect Information</h5>
+                    <small class="text-muted">Register a qualified prospective client or inbound inquiry</small>
+                </div>
+                <span class="badge bg-light text-muted border">New Lead</span>
+            </div>
+
+            <div class="crm-card-body">
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger py-2 px-3 small border-0 mb-4" style="background-color: #fef2f2; color: #991b1b; border-radius: 8px;">
+                        <div asp-validation-summary="All" class="mb-0"></div>
+                    </div>
+                }
+
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row g-3">
+                        <!-- Lead Name -->
+                        <div class="col-md-6">
+                            <label asp-for="LeadName" class="form-label-crm"></label>
+                            <input asp-for="LeadName" class="form-control form-control-crm" placeholder="e.g. Mark Henderson" />
+                            <span asp-validation-for="LeadName" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Company -->
+                        <div class="col-md-6">
+                            <label asp-for="CompanyName" class="form-label-crm"></label>
+                            <input asp-for="CompanyName" class="form-control form-control-crm" placeholder="e.g. Nova Energy Grid" />
+                            <span asp-validation-for="CompanyName" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label-crm"></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-envelope"></i></span>
+                                <input asp-for="Email" class="form-control form-control-crm border-start-0" placeholder="mark@company.com" />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="col-md-6">
+                            <label asp-for="Phone" class="form-label-crm"></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-telephone"></i></span>
+                                <input asp-for="Phone" class="form-control form-control-crm border-start-0" placeholder="+1 555-021-3490" />
+                            </div>
+                            <span asp-validation-for="Phone" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Source & Priority -->
+                        <div class="col-md-6">
+                            <label asp-for="Source" class="form-label-crm"></label>
+                            <select asp-for="Source" class="form-select form-select-crm">
+                                <option value="Website">Website Inbound</option>
+                                <option value="Referral">Client Referral</option>
+                                <option value="Cold Call">Cold Outreach</option>
+                                <option value="Trade Show">Industry Expo / Trade Show</option>
+                                <option value="Email Campaign">Email Marketing</option>
+                                <option value="Social Media">LinkedIn / Social</option>
+                                <option value="Partner">Channel Partner</option>
+                            </select>
+                            <span asp-validation-for="Source" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Priority" class="form-label-crm"></label>
+                            <select asp-for="Priority" class="form-select form-select-crm">
+                                <option value="High">High Priority</option>
+                                <option value="Medium">Medium Priority</option>
+                                <option value="Low">Low Priority</option>
+                            </select>
+                            <span asp-validation-for="Priority" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Status & Expected Value -->
+                        <div class="col-md-6">
+                            <label asp-for="Status" class="form-label-crm"></label>
+                            <select asp-for="Status" class="form-select form-select-crm">
+                                <option value="New">New</option>
+                                <option value="Contacted">Contacted</option>
+                                <option value="Qualified">Qualified</option>
+                                <option value="Unqualified">Unqualified</option>
+                                <option value="Converted">Converted</option>
+                                <option value="Lost">Lost</option>
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="ExpectedValue" class="form-label-crm"></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted">$</span>
+                                <input asp-for="ExpectedValue" class="form-control form-control-crm border-start-0" type="number" step="1000" />
+                            </div>
+                            <span asp-validation-for="ExpectedValue" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Assigned User -->
+                        <div class="col-12">
+                            <label asp-for="AssignedTo" class="form-label-crm"></label>
+                            <select asp-for="AssignedTo" class="form-select form-select-crm" asp-items="ViewBag.UsersList">
+                                <option value="">Select Sales Executive...</option>
+                            </select>
+                            <span asp-validation-for="AssignedTo" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="col-12">
+                            <label asp-for="Notes" class="form-label-crm"></label>
+                            <textarea asp-for="Notes" class="form-control form-control-crm" rows="3" placeholder="Inquiry message, prospect requirements, initial phone comments..."></textarea>
+                            <span asp-validation-for="Notes" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-secondary-crm">Cancel</a>
+                        <button type="submit" class="btn btn-primary-crm">
+                            <i class="bi bi-check2-circle"></i> Save Lead
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

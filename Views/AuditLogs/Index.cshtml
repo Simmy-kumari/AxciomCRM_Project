@@ -1,0 +1,256 @@
+@model AcxiomCRM.ViewModels.AuditLogListViewModel
+@{
+    ViewData["Title"] = "Security & Business Audit Logs";
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1 tracking-tight">System Audit & Compliance Logs</h2>
+        <p class="text-muted small mb-0">Append-only compliance record tracking authentication events, data modifications, and security actions.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-6">
+            <i class="bi bi-shield-check me-1"></i> Tamper-Protected Audit Trail
+        </span>
+    </div>
+</div>
+
+<!-- Summary Quick Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Total Audit Events</div>
+                    <div class="fs-4 fw-bold text-dark">@Model.TotalLogsCount</div>
+                </div>
+                <div class="p-2 rounded bg-primary-subtle text-primary fs-4"><i class="bi bi-journal-text"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Security & Auth Events</div>
+                    <div class="fs-4 fw-bold text-danger">@Model.SecurityEventsCount</div>
+                </div>
+                <div class="p-2 rounded bg-danger-subtle text-danger fs-4"><i class="bi bi-shield-lock"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">CRM CRUD Changes</div>
+                    <div class="fs-4 fw-bold text-success">@Model.CrudEventsCount</div>
+                </div>
+                <div class="p-2 rounded bg-success-subtle text-success fs-4"><i class="bi bi-pencil-square"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="crm-card mb-4">
+    <div class="p-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control form-control-crm" 
+                       placeholder="Search details or record ID..." />
+            </div>
+            <div class="col-md-2">
+                <select name="moduleFilter" class="form-select form-select-crm">
+                    <option value="">All Modules</option>
+                    @if (ViewBag.ModulesList != null)
+                    {
+                        foreach (var m in (List<string>)ViewBag.ModulesList)
+                        {
+                            <option value="@m" selected="@(Model.ModuleFilter == m)">@m</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="actionFilter" class="form-select form-select-crm">
+                    <option value="">All Actions</option>
+                    @if (ViewBag.ActionsList != null)
+                    {
+                        foreach (var a in (List<string>)ViewBag.ActionsList)
+                        {
+                            <option value="@a" selected="@(Model.ActionFilter == a)">@a</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" class="form-control form-control-crm" title="From Date" />
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary-crm w-100 justify-content-center">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a asp-action="Index" class="btn btn-secondary-crm">Clear</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table crm-table align-middle">
+            <thead>
+                <tr>
+                    <th>Timestamp (UTC)</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Module</th>
+                    <th>Record ID</th>
+                    <th>Result</th>
+                    <th>IP Address</th>
+                    <th class="text-end">Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Logs.Any())
+                {
+                    @foreach (var log in Model.Logs)
+                    {
+                        <tr>
+                            <td>
+                                <div class="small fw-semibold text-dark">@log.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss")</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark small">@log.UserName</div>
+                                <small class="text-muted" style="font-size: 0.72rem;">@log.UserId</small>
+                            </td>
+                            <td>
+                                <span class="badge @(log.Action == "Login" ? "bg-info-subtle text-info" : log.Action == "Failed Login" || log.Action == "Lockout" ? "bg-danger-subtle text-danger" : log.Action == "Create" ? "bg-success-subtle text-success" : log.Action == "Delete" ? "bg-danger text-white" : "bg-light text-dark border") fw-semibold px-2 py-1">
+                                    @log.Action
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">@log.EntityName</span>
+                            </td>
+                            <td>
+                                <code>@(log.RecordId ?? "—")</code>
+                            </td>
+                            <td>
+                                <span class="badge @(log.Result == "Success" ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
+                                    @log.Result
+                                </span>
+                            </td>
+                            <td>
+                                <small class="text-muted">@(log.IpAddress ?? "127.0.0.1")</small>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-light border" 
+                                        data-bs-toggle="modal" data-bs-target="#auditModal-@log.AuditLogId" title="View Payload">
+                                    <i class="bi bi-search"></i>
+                                </button>
+
+                                <!-- Audit Payload Modal -->
+                                <div class="modal fade text-start" id="auditModal-@log.AuditLogId" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                                        <div class="modal-content border-0 shadow-lg" style="border-radius: var(--crm-radius-lg);">
+                                            <div class="modal-header border-bottom">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span class="badge bg-primary">@log.EntityName</span>
+                                                    <h5 class="modal-title fw-bold text-dark mb-0">Audit Entry #@log.AuditLogId — @log.Action</h5>
+                                                </div>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body p-4">
+                                                <div class="row g-3 mb-3">
+                                                    <div class="col-sm-6">
+                                                        <label class="text-muted small fw-bold text-uppercase">Operator</label>
+                                                        <div class="fw-bold text-dark">@log.UserName (@log.UserId)</div>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <label class="text-muted small fw-bold text-uppercase">Timestamp</label>
+                                                        <div class="text-dark">@log.CreatedDate.ToString("F")</div>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <label class="text-muted small fw-bold text-uppercase">Target Record</label>
+                                                        <div><code>@(log.RecordId ?? "System Entity")</code></div>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <label class="text-muted small fw-bold text-uppercase">Outcome Result</label>
+                                                        <div><span class="badge bg-success">@log.Result</span> via @(log.IpAddress ?? "Local")</div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="text-muted small fw-bold text-uppercase">Event Details</label>
+                                                    <div class="p-3 bg-light rounded border small">
+                                                        @(log.Details ?? "No additional metadata recorded.")
+                                                    </div>
+                                                </div>
+
+                                                @if (!string.IsNullOrEmpty(log.OldValue))
+                                                {
+                                                    <div class="mb-3">
+                                                        <label class="text-muted small fw-bold text-uppercase text-danger">Original Value (Before Modification)</label>
+                                                        <pre class="p-3 bg-danger-subtle text-danger rounded border border-danger-subtle small mb-0"><code>@log.OldValue</code></pre>
+                                                    </div>
+                                                }
+
+                                                @if (!string.IsNullOrEmpty(log.NewValue))
+                                                {
+                                                    <div class="mb-0">
+                                                        <label class="text-muted small fw-bold text-uppercase text-success">New Value (After Modification)</label>
+                                                        <pre class="p-3 bg-success-subtle text-success rounded border border-success-subtle small mb-0"><code>@log.NewValue</code></pre>
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div class="modal-footer border-top bg-light">
+                                                <button type="button" class="btn btn-secondary-crm" data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-journal-check fs-1 d-block mb-2 text-secondary"></i>
+                            <h5>No Audit Records Found</h5>
+                            <p class="small text-muted mb-0">No events matched the chosen filter parameters.</p>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (Model.TotalPages > 1)
+    {
+        <div class="p-3 border-top d-flex justify-content-between align-items-center">
+            <span class="text-muted small">Showing @Model.Logs.Count of @Model.TotalItems audit records</span>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage - 1)" 
+                           asp-route-searchTerm="@Model.SearchTerm" asp-route-moduleFilter="@Model.ModuleFilter" asp-route-actionFilter="@Model.ActionFilter">Previous</a>
+                    </li>
+                    @for (int p = 1; p <= Model.TotalPages; p++)
+                    {
+                        <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-page="@p"
+                               asp-route-searchTerm="@Model.SearchTerm" asp-route-moduleFilter="@Model.ModuleFilter" asp-route-actionFilter="@Model.ActionFilter">@p</a>
+                        </li>
+                    }
+                    <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage + 1)"
+                           asp-route-searchTerm="@Model.SearchTerm" asp-route-moduleFilter="@Model.ModuleFilter" asp-route-actionFilter="@Model.ActionFilter">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
+</div>

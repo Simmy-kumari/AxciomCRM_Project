@@ -1,0 +1,155 @@
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var roles = currentUser != null ? await UserManager.GetRolesAsync(currentUser) : new List<string>();
+    var userRole = roles.FirstOrDefault() ?? "SalesExecutive";
+    var currentCtrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "Dashboard";
+}
+
+<header class="crm-topbar">
+    <div class="crm-topbar-left">
+        <button type="button" class="crm-sidebar-toggle" id="sidebarToggle" title="Toggle Navigation">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 py-0" style="font-size: 0.78rem;">
+                    <li class="breadcrumb-item text-muted"><a asp-controller="Dashboard" asp-action="Index" class="text-decoration-none text-muted">AcxiomCRM</a></li>
+                    <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">@currentCtrl</li>
+                </ol>
+            </nav>
+            <h1 class="crm-breadcrumb-title">@ViewData["Title"]</h1>
+        </div>
+    </div>
+
+    <div class="crm-topbar-right">
+        <!-- Global Quick Search Trigger -->
+        <button type="button" class="crm-global-search-btn" data-bs-toggle="modal" data-bs-target="#globalSearchModal">
+            <i class="bi bi-search text-muted"></i>
+            <span>Search records, leads...</span>
+            <span class="search-kbd">/</span>
+        </button>
+
+        <!-- Quick Demo Switcher Pill (Invaluable for live demo testing) -->
+        <div class="dropdown d-none d-md-block">
+            <button class="btn btn-sm demo-role-badge dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Demo Role Switcher">
+                <i class="bi bi-person-badge"></i>
+                <span>Role: @userRole</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2" style="min-width: 220px; font-size: 0.85rem;">
+                <li class="dropdown-header text-uppercase fw-bold text-muted" style="font-size: 0.7rem;">Demo Quick Role Switch</li>
+                <li>
+                    <form asp-controller="Account" asp-action="QuickDemoLogin" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="role" value="Admin" />
+                        <button type="submit" class="dropdown-item py-2 d-flex align-items-center gap-2 @(userRole == "Admin" ? "active bg-primary text-white" : "")">
+                            <i class="bi bi-shield-check"></i>
+                            <div>
+                                <div class="fw-semibold">Administrator</div>
+                                <small class="text-muted text-opacity-75" style="font-size: 0.72rem;">Full access & audit</small>
+                            </div>
+                        </button>
+                    </form>
+                </li>
+                <li>
+                    <form asp-controller="Account" asp-action="QuickDemoLogin" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="role" value="Manager" />
+                        <button type="submit" class="dropdown-item py-2 d-flex align-items-center gap-2 @(userRole == "Manager" ? "active bg-primary text-white" : "")">
+                            <i class="bi bi-pie-chart"></i>
+                            <div>
+                                <div class="fw-semibold">Sales Manager</div>
+                                <small class="text-muted text-opacity-75" style="font-size: 0.72rem;">Team pipeline & reports</small>
+                            </div>
+                        </button>
+                    </form>
+                </li>
+                <li>
+                    <form asp-controller="Account" asp-action="QuickDemoLogin" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="role" value="SalesExecutive" />
+                        <button type="submit" class="dropdown-item py-2 d-flex align-items-center gap-2 @(userRole == "SalesExecutive" ? "active bg-primary text-white" : "")">
+                            <i class="bi bi-person-lines-fill"></i>
+                            <div>
+                                <div class="fw-semibold">Sales Executive</div>
+                                <small class="text-muted text-opacity-75" style="font-size: 0.72rem;">Assigned records only</small>
+                            </div>
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Notifications Bell -->
+        <div class="dropdown">
+            <button class="crm-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                <i class="bi bi-bell"></i>
+                <span class="crm-badge-dot"></span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end shadow-md border-0 p-0" style="width: 320px; font-size: 0.85rem;">
+                <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                    <span class="fw-bold">Notifications</span>
+                    <span class="badge bg-primary-subtle text-primary">3 New</span>
+                </div>
+                <div class="list-group list-group-flush" style="max-height: 280px; overflow-y: auto;">
+                    <a href="#" class="list-group-item list-group-item-action p-3">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <strong class="text-primary" style="font-size: 0.82rem;">Follow-Up Due Today</strong>
+                            <small class="text-muted">10:30 AM</small>
+                        </div>
+                        <p class="mb-1 text-muted" style="font-size: 0.78rem;">Executive meeting with Apex Global Dynamics.</p>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action p-3">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <strong class="text-success" style="font-size: 0.82rem;">Lead Qualified</strong>
+                            <small class="text-muted">Yesterday</small>
+                        </div>
+                        <p class="mb-1 text-muted" style="font-size: 0.78rem;">Nova Energy Grid was qualified for expansion.</p>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action p-3">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <strong class="text-dark" style="font-size: 0.82rem;">Deal Progress</strong>
+                            <small class="text-muted">2d ago</small>
+                        </div>
+                        <p class="mb-1 text-muted" style="font-size: 0.78rem;">Annual SLA Renewal moved to Won status ($65,000).</p>
+                    </a>
+                </div>
+                <div class="p-2 text-center border-top bg-light">
+                    <a asp-controller="FollowUps" asp-action="Index" class="text-decoration-none text-primary fw-semibold" style="font-size: 0.78rem;">View All Follow-Ups</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Profile Dropdown -->
+        <div class="dropdown">
+            <button class="btn btn-link p-0 text-decoration-none dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <div class="user-avatar-sm" style="width: 38px; height: 38px; margin: 0; font-size: 0.9rem;">
+                    @(!string.IsNullOrEmpty(currentUser?.FullName) ? currentUser.FullName[0].ToString().ToUpper() : "U")
+                </div>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-md border-0 py-2" style="min-width: 230px; font-size: 0.85rem;">
+                <li class="px-3 py-2 border-bottom">
+                    <div class="fw-bold text-dark">@(currentUser?.FullName ?? "Demo User")</div>
+                    <div class="text-muted small">@(currentUser?.Email ?? "user@acxiom.com")</div>
+                    <span class="badge bg-primary-subtle text-primary mt-1" style="font-size: 0.7rem;">@userRole</span>
+                </li>
+                @if (User.IsInRole("Admin"))
+                {
+                    <li><a class="dropdown-item py-2" asp-controller="Users" asp-action="Index"><i class="bi bi-people me-2 text-muted"></i> User Management</a></li>
+                    <li><a class="dropdown-item py-2" asp-controller="AuditLogs" asp-action="Index"><i class="bi bi-shield-check me-2 text-muted"></i> Security & Audit</a></li>
+                    <li><hr class="dropdown-divider my-1"></li>
+                }
+                <li>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="px-2">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger w-100 btn-sm d-flex align-items-center justify-content-center gap-2 mt-1">
+                            <i class="bi bi-box-arrow-right"></i> Sign Out
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</header>

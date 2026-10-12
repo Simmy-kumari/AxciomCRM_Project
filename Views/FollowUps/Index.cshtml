@@ -1,0 +1,204 @@
+@model AcxiomCRM.ViewModels.FollowUpListViewModel
+@{
+    ViewData["Title"] = "Follow-Up Engagements";
+    string tab = Model.ActiveTab;
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1 tracking-tight">Follow-Up Management</h2>
+        <p class="text-muted small mb-0">Schedule and track meetings, calls, and customer touchpoints.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a asp-action="Create" class="btn btn-primary-crm shadow-sm">
+            <i class="bi bi-calendar-plus-fill"></i>
+            <span>Schedule Follow-Up</span>
+        </a>
+    </div>
+</div>
+
+<!-- Tabs Bar -->
+<div class="d-flex gap-2 overflow-auto pb-2 mb-3">
+    <a asp-action="Index" asp-route-tab="all" 
+       class="btn btn-sm @(tab == "all" ? "btn-dark" : "btn-light border") px-3 rounded-pill fw-semibold">
+        All <span class="badge bg-secondary ms-1">@Model.TotalCount</span>
+    </a>
+    <a asp-action="Index" asp-route-tab="upcoming" 
+       class="btn btn-sm @(tab == "upcoming" ? "btn-primary" : "btn-light border") px-3 rounded-pill fw-semibold">
+        Upcoming <span class="badge bg-primary ms-1">@Model.UpcomingCount</span>
+    </a>
+    <a asp-action="Index" asp-route-tab="pending" 
+       class="btn btn-sm @(tab == "pending" ? "btn-warning text-dark" : "btn-light border") px-3 rounded-pill fw-semibold">
+        Pending / Planned <span class="badge bg-warning text-dark ms-1">@Model.PendingCount</span>
+    </a>
+    <a asp-action="Index" asp-route-tab="completed" 
+       class="btn btn-sm @(tab == "completed" ? "btn-success" : "btn-light border") px-3 rounded-pill fw-semibold">
+        Completed <span class="badge bg-success ms-1">@Model.CompletedCount</span>
+    </a>
+    <a asp-action="Index" asp-route-tab="missed" 
+       class="btn btn-sm @(tab == "missed" ? "btn-danger" : "btn-light border") px-3 rounded-pill fw-semibold">
+        Missed / Overdue <span class="badge bg-danger ms-1">@Model.MissedCount</span>
+    </a>
+</div>
+
+<!-- Search & Type Filter -->
+<div class="crm-card mb-4">
+    <div class="p-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <input type="hidden" name="tab" value="@Model.ActiveTab" />
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control border-start-0 shadow-none" 
+                           placeholder="Search by subject or remarks..." />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="typeFilter" class="form-select shadow-none">
+                    <option value="">All Interaction Types</option>
+                    <option value="Call" selected="@(Model.TypeFilter == "Call")">Call</option>
+                    <option value="Meeting" selected="@(Model.TypeFilter == "Meeting")">Meeting</option>
+                    <option value="Email" selected="@(Model.TypeFilter == "Email")">Email</option>
+                    <option value="Demo" selected="@(Model.TypeFilter == "Demo")">Demo</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary-crm w-100 justify-content-center">Filter</button>
+                <a asp-action="Index" asp-route-tab="@Model.ActiveTab" class="btn btn-secondary-crm">Clear</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table crm-table align-middle">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Subject & Agenda</th>
+                    <th>Related To</th>
+                    <th>Scheduled Date</th>
+                    <th>Assigned To</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.FollowUps.Any())
+                {
+                    @foreach (var fu in Model.FollowUps)
+                    {
+                        <tr class="@(fu.IsOverdue ? "table-danger-subtle" : "")">
+                            <td>
+                                <span class="badge bg-light text-dark border d-inline-flex align-items-center gap-1">
+                                    <i class="bi @(fu.FollowUpType == "Meeting" ? "bi-calendar-event text-primary" : fu.FollowUpType == "Demo" ? "bi-display text-purple" : fu.FollowUpType == "Email" ? "bi-envelope text-warning" : "bi-telephone text-info")"></i>
+                                    @fu.FollowUpType
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">@fu.Subject</div>
+                                @if (!string.IsNullOrEmpty(fu.Remarks))
+                                {
+                                    <small class="text-secondary d-block text-truncate" style="max-width: 320px;">@fu.Remarks</small>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-secondary border">@fu.RelatedType:</span>
+                                <span class="text-dark fw-medium small ms-1">@fu.RelatedName</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark small">@fu.FollowUpDate.ToString("MMM dd, yyyy")</div>
+                                <small class="text-muted">@fu.FollowUpDate.ToString("hh:mm tt")</small>
+                                @if (fu.IsOverdue)
+                                {
+                                    <span class="badge bg-danger ms-1" style="font-size: 0.65rem;">Overdue</span>
+                                }
+                            </td>
+                            <td>
+                                <small class="text-dark fw-medium">@fu.AssignedToName</small>
+                            </td>
+                            <td>
+                                <span class="badge-crm @(fu.Status == "Completed" ? "badge-won" : fu.Status == "Missed" || fu.IsOverdue ? "badge-lost" : "badge-new")">
+                                    @fu.Status
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    @if (fu.Status != "Completed")
+                                    {
+                                        <form asp-action="Complete" asp-route-id="@fu.FollowUpId" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Mark Completed">
+                                                <i class="bi bi-check2"></i>
+                                            </button>
+                                        </form>
+
+                                        <!-- Reschedule button triggering modal -->
+                                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                data-bs-toggle="modal" data-bs-target="#rescheduleModal-@fu.FollowUpId" title="Reschedule">
+                                            <i class="bi bi-clock-history"></i>
+                                        </button>
+                                    }
+
+                                    <button type="button" class="btn btn-sm btn-light border text-danger" 
+                                            data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"
+                                            data-action="@Url.Action("Delete", "FollowUps", new { id = fu.FollowUpId })"
+                                            data-name="@fu.Subject" data-type="Follow-Up"
+                                            title="Remove Follow-Up">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Inline Reschedule Modal for this Follow-Up -->
+                                @if (fu.Status != "Completed")
+                                {
+                                    <div class="modal fade text-start" id="rescheduleModal-@fu.FollowUpId" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-0 shadow-lg" style="border-radius: var(--crm-radius-lg);">
+                                                <div class="modal-header border-bottom">
+                                                    <h5 class="modal-title fw-bold text-dark">Reschedule Follow-Up</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form asp-action="Reschedule" asp-route-id="@fu.FollowUpId" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <div class="modal-body">
+                                                        <p class="small text-muted mb-3">Adjust date & time for <strong>@fu.Subject</strong>.</p>
+                                                        <div class="mb-3">
+                                                            <label class="form-label-crm">New Scheduled Date & Time *</label>
+                                                            <input type="datetime-local" name="newDate" class="form-control form-control-crm" required 
+                                                                   value="@DateTime.UtcNow.AddDays(1).ToString("yyyy-MM-ddTHH:mm")" />
+                                                            <small class="text-muted" style="font-size: 0.72rem;">Follow-up date cannot be earlier than today.</small>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label-crm">Rescheduling Notes (Optional)</label>
+                                                            <textarea name="notes" class="form-control form-control-crm" rows="2" placeholder="e.g. Client requested postponement to next Tuesday..."></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer border-top">
+                                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-primary-crm">Confirm Reschedule</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-calendar-check fs-1 d-block mb-2 text-secondary"></i>
+                            <h5>No Follow-Ups Found</h5>
+                            <p class="small text-muted mb-3">No activity records match your current filter.</p>
+                            <a asp-action="Create" class="btn btn-sm btn-primary-crm">Schedule New Follow-Up</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

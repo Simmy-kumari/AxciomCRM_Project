@@ -1,0 +1,143 @@
+@model AcxiomCRM.ViewModels.FollowUpFormViewModel
+@{
+    ViewData["Title"] = "Schedule Follow-Up";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <a asp-action="Index" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-1">
+                    <i class="bi bi-arrow-left"></i> Back to Follow-Ups
+                </a>
+                <h2 class="fw-bold text-dark mb-0">Schedule Interaction Follow-Up</h2>
+            </div>
+        </div>
+
+        <div class="crm-card">
+            <div class="crm-card-header">
+                <div>
+                    <h5 class="crm-card-title">Follow-Up Details</h5>
+                    <small class="text-muted">Set up next contact touchpoint, meeting, or demo</small>
+                </div>
+            </div>
+
+            <div class="crm-card-body">
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger py-2 px-3 small border-0 mb-4" style="background-color: #fef2f2; color: #991b1b; border-radius: 8px;">
+                        <div asp-validation-summary="All" class="mb-0"></div>
+                    </div>
+                }
+
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row g-3">
+                        <!-- Related Type -->
+                        <div class="col-md-6">
+                            <label asp-for="RelatedType" class="form-label-crm"></label>
+                            <select asp-for="RelatedType" class="form-select form-select-crm" id="relTypeSelect">
+                                <option value="Customer">Customer Account</option>
+                                <option value="Lead">Sales Lead</option>
+                                <option value="Opportunity">Opportunity Deal</option>
+                            </select>
+                            <span asp-validation-for="RelatedType" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Interaction Type -->
+                        <div class="col-md-6">
+                            <label asp-for="FollowUpType" class="form-label-crm"></label>
+                            <select asp-for="FollowUpType" class="form-select form-select-crm">
+                                <option value="Call">Phone Call</option>
+                                <option value="Meeting">Executive Meeting</option>
+                                <option value="Email">Email Follow-Up</option>
+                                <option value="Demo">Product Demo</option>
+                            </select>
+                            <span asp-validation-for="FollowUpType" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Entity Selectors based on Type -->
+                        <div class="col-12" id="customerSelectGroup">
+                            <label class="form-label-crm">Select Customer</label>
+                            <select asp-for="CustomerId" class="form-select form-select-crm" asp-items="ViewBag.CustomersList">
+                                <option value="">Choose Customer...</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12" id="leadSelectGroup" style="display: none;">
+                            <label class="form-label-crm">Select Lead</label>
+                            <select asp-for="LeadId" class="form-select form-select-crm" asp-items="ViewBag.LeadsList">
+                                <option value="">Choose Lead...</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12" id="oppSelectGroup" style="display: none;">
+                            <label class="form-label-crm">Select Opportunity</label>
+                            <select asp-for="OpportunityId" class="form-select form-select-crm" asp-items="ViewBag.OpportunitiesList">
+                                <option value="">Choose Opportunity Deal...</option>
+                            </select>
+                        </div>
+
+                        <!-- Subject -->
+                        <div class="col-12">
+                            <label asp-for="Subject" class="form-label-crm"></label>
+                            <input asp-for="Subject" class="form-control form-control-crm" placeholder="e.g. Discuss Q4 SLA pricing review" />
+                            <span asp-validation-for="Subject" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Scheduled Date & Time -->
+                        <div class="col-md-6">
+                            <label asp-for="FollowUpDate" class="form-label-crm"></label>
+                            <input asp-for="FollowUpDate" class="form-control form-control-crm" type="datetime-local" />
+                            <small class="text-muted" style="font-size: 0.72rem;">Requirement: Date cannot be earlier than today.</small>
+                            <span asp-validation-for="FollowUpDate" class="text-danger small d-block"></span>
+                        </div>
+
+                        <!-- Assigned User -->
+                        <div class="col-md-6">
+                            <label asp-for="AssignedTo" class="form-label-crm"></label>
+                            <select asp-for="AssignedTo" class="form-select form-select-crm" asp-items="ViewBag.UsersList">
+                                <option value="">Select Team Member...</option>
+                            </select>
+                        </div>
+
+                        <!-- Remarks -->
+                        <div class="col-12">
+                            <label asp-for="Remarks" class="form-label-crm"></label>
+                            <textarea asp-for="Remarks" class="form-control form-control-crm" rows="3" placeholder="Meeting agenda items, discussion topics, prerequisites..."></textarea>
+                            <span asp-validation-for="Remarks" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-secondary-crm">Cancel</a>
+                        <button type="submit" class="btn btn-primary-crm">
+                            <i class="bi bi-calendar-check"></i> Save Schedule
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const relType = document.getElementById('relTypeSelect');
+        const custGroup = document.getElementById('customerSelectGroup');
+        const leadGroup = document.getElementById('leadSelectGroup');
+        const oppGroup = document.getElementById('oppSelectGroup');
+
+        function updateSelectors() {
+            if (!relType) return;
+            custGroup.style.display = relType.value === 'Customer' ? 'block' : 'none';
+            leadGroup.style.display = relType.value === 'Lead' ? 'block' : 'none';
+            oppGroup.style.display = relType.value === 'Opportunity' ? 'block' : 'none';
+        }
+
+        relType?.addEventListener('change', updateSelectors);
+        updateSelectors();
+    </script>
+}

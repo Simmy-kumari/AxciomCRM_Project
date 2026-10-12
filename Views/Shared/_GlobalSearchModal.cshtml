@@ -1,0 +1,95 @@
+<!-- Global Quick Search Command Palette Modal -->
+<div class="modal fade" id="globalSearchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: var(--crm-radius-xl); overflow: hidden;">
+            <div class="modal-header border-bottom p-3 bg-white">
+                <div class="d-flex align-items-center w-100 gap-2">
+                    <i class="bi bi-search text-primary fs-5 ms-2"></i>
+                    <input type="text" id="globalSearchInput" class="form-control border-0 shadow-none fs-6" 
+                           placeholder="Search across customers, leads, opportunities, deals..." autocomplete="off" />
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="modal-body p-0" style="max-height: 400px; overflow-y: auto;">
+                <div class="p-3 bg-light text-uppercase fw-bold text-muted border-bottom" style="font-size: 0.7rem; letter-spacing: 0.05em;">
+                    Quick Navigation & Records
+                </div>
+                <div id="globalSearchResults" class="list-group list-group-flush">
+                    <a asp-controller="Customers" asp-action="Index" class="list-group-item list-group-item-action p-3 search-result-item d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-2 bg-primary-subtle text-primary rounded"><i class="bi bi-people-fill"></i></div>
+                            <div>
+                                <div class="fw-semibold text-dark">Apex Global Dynamics</div>
+                                <small class="text-muted">Customer &bull; John Carter &bull; CUST-1001</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-light text-secondary border">Active</span>
+                    </a>
+
+                    <a asp-controller="Customers" asp-action="Index" class="list-group-item list-group-item-action p-3 search-result-item d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-2 bg-primary-subtle text-primary rounded"><i class="bi bi-people-fill"></i></div>
+                            <div>
+                                <div class="fw-semibold text-dark">BlueWave Infotech</div>
+                                <small class="text-muted">Customer &bull; Maya Lin &bull; CUST-1002</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-light text-secondary border">Active</span>
+                    </a>
+
+                    <a asp-controller="Leads" asp-action="Index" class="list-group-item list-group-item-action p-3 search-result-item d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-2 bg-success-subtle text-success rounded"><i class="bi bi-funnel-fill"></i></div>
+                            <div>
+                                <div class="fw-semibold text-dark">Nova Energy Grid</div>
+                                <small class="text-muted">Lead &bull; Mark Henderson &bull; $75,000</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-success-subtle text-success">Qualified</span>
+                    </a>
+
+                    <a asp-controller="Leads" asp-action="Index" class="list-group-item list-group-item-action p-3 search-result-item d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-2 bg-success-subtle text-success rounded"><i class="bi bi-funnel-fill"></i></div>
+                            <div>
+                                <div class="fw-semibold text-dark">CyberShield Security</div>
+                                <small class="text-muted">Lead &bull; Rachel Green &bull; $45,000</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-info-subtle text-info">Contacted</span>
+                    </a>
+
+                    <a asp-controller="Opportunities" asp-action="Index" class="list-group-item list-group-item-action p-3 search-result-item d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-2 bg-warning-subtle text-warning rounded"><i class="bi bi-briefcase-fill"></i></div>
+                            <div>
+                                <div class="fw-semibold text-dark">Enterprise Cloud Migration</div>
+                                <small class="text-muted">Opportunity &bull; $140,000 &bull; Apex Global</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-warning-subtle text-warning">Negotiation</span>
+                    </a>
+
+                    <a asp-controller="Opportunities" asp-action="Index" class="list-group-item list-group-item-action p-3 search-result-item d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-2 bg-warning-subtle text-warning rounded"><i class="bi bi-briefcase-fill"></i></div>
+                            <div>
+                                <div class="fw-semibold text-dark">Financial Analytics Modernization</div>
+                                <small class="text-muted">Opportunity &bull; $95,000 &bull; Crestview Financial</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-primary-subtle text-primary">Proposal</span>
+                    </a>
+                </div>
+                <div id="searchEmptyState" class="p-4 text-center text-muted" style="display: none;">
+                    <i class="bi bi-search fs-3 mb-2 d-block"></i>
+                    <div>No matching records found.</div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light p-2 px-3 border-top d-flex justify-content-between" style="font-size: 0.78rem;">
+                <span class="text-muted">Use <kbd class="bg-white border text-dark px-1 py-0 rounded">Esc</kbd> to close</span>
+                <span class="text-muted">Quick Jump Command Palette</span>
+            </div>
+        </div>
+    </div>
+</div>

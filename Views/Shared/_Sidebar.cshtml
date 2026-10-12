@@ -1,0 +1,106 @@
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@{
+    var currentCtrl = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var currentUser = await UserManager.GetUserAsync(User);
+    var roles = currentUser != null ? await UserManager.GetRolesAsync(currentUser) : new List<string>();
+    var userRole = roles.FirstOrDefault() ?? "SalesExecutive";
+    var initials = !string.IsNullOrEmpty(currentUser?.FullName) 
+        ? string.Join("", currentUser.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => s[0])).ToUpper() 
+        : "AC";
+}
+
+<aside class="crm-sidebar" id="crmSidebar">
+    <!-- Brand -->
+    <a asp-controller="Dashboard" asp-action="Index" class="crm-sidebar-brand">
+        <div class="brand-icon">
+            <i class="bi bi-clouds-fill"></i>
+        </div>
+        <div class="brand-title">Acxiom<span class="text-primary-emphasis" style="color: #60a5fa !important;">CRM</span></div>
+        <span class="brand-badge">SaaS</span>
+    </a>
+
+    <!-- Navigation Links -->
+    <nav class="crm-sidebar-nav">
+        <div class="crm-nav-section-title">Main Menu</div>
+
+        <a asp-controller="Dashboard" asp-action="Index" 
+           class="crm-nav-link @(currentCtrl == "Dashboard" ? "active" : "")">
+            <i class="bi bi-grid-1x2-fill"></i>
+            <span>Dashboard</span>
+        </a>
+
+        <a asp-controller="Customers" asp-action="Index" 
+           class="crm-nav-link @(currentCtrl == "Customers" ? "active" : "")">
+            <i class="bi bi-people-fill"></i>
+            <span>Customers</span>
+        </a>
+
+        <a asp-controller="Leads" asp-action="Index" 
+           class="crm-nav-link @(currentCtrl == "Leads" ? "active" : "")">
+            <i class="bi bi-funnel-fill"></i>
+            <span>Leads</span>
+        </a>
+
+        <a asp-controller="Opportunities" asp-action="Index" 
+           class="crm-nav-link @(currentCtrl == "Opportunities" ? "active" : "")">
+            <i class="bi bi-briefcase-fill"></i>
+            <span>Opportunities</span>
+        </a>
+
+        <a asp-controller="FollowUps" asp-action="Index" 
+           class="crm-nav-link @(currentCtrl == "FollowUps" ? "active" : "")">
+            <i class="bi bi-calendar-check-fill"></i>
+            <span>Follow-Ups</span>
+        </a>
+
+        <a asp-controller="Activities" asp-action="Index" 
+           class="crm-nav-link @(currentCtrl == "Activities" ? "active" : "")">
+            <i class="bi bi-clock-history"></i>
+            <span>Activities</span>
+        </a>
+
+        <div class="crm-nav-section-title mt-3">Intelligence & Analytics</div>
+
+        <a asp-controller="Reports" asp-action="Index" 
+           class="crm-nav-link @(currentCtrl == "Reports" ? "active" : "")">
+            <i class="bi bi-bar-chart-fill"></i>
+            <span>Reports & KPIs</span>
+        </a>
+
+        @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+        {
+            <div class="crm-nav-section-title mt-3">Administration</div>
+
+            <a asp-controller="Users" asp-action="Index" 
+               class="crm-nav-link @(currentCtrl == "Users" ? "active" : "")">
+                <i class="bi bi-shield-lock-fill"></i>
+                <span>User & Roles</span>
+            </a>
+
+            <a asp-controller="AuditLogs" asp-action="Index" 
+               class="crm-nav-link @(currentCtrl == "AuditLogs" ? "active" : "")">
+                <i class="bi bi-journal-text"></i>
+                <span>Audit Logs</span>
+            </a>
+        }
+    </nav>
+
+    <!-- Sidebar User Footer -->
+    <div class="crm-sidebar-footer">
+        <div class="user-mini-card">
+            <div class="user-avatar-sm">@initials</div>
+            <div class="user-mini-info">
+                <div class="user-mini-name">@(currentUser?.FullName ?? "Demo User")</div>
+                <div class="user-mini-role">@userRole</div>
+            </div>
+            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline ms-auto">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-link text-secondary p-0" title="Sign out" style="text-decoration: none;">
+                    <i class="bi bi-box-arrow-right fs-5 text-white-50 hover-text-white"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</aside>

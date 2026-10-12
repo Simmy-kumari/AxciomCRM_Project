@@ -1,0 +1,481 @@
+@model AcxiomCRM.ViewModels.ReportDashboardViewModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Executive Reports & Intelligence";
+    string activeReport = Model.ActiveReport;
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1 tracking-tight">Intelligence & Reports</h2>
+        <p class="text-muted small mb-0">Cross-module sales analytics, conversion metrics, and compliance audit reports.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-secondary-crm shadow-sm" onclick="window.print();">
+            <i class="bi bi-printer"></i>
+            <span>Print Report</span>
+        </button>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="crm-card mb-4">
+    <div class="p-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <input type="hidden" name="type" value="@activeReport" />
+            
+            <div class="col-md-3">
+                <label class="form-label-crm small">Start Date</label>
+                <input type="date" name="startDate" value="@(Model.StartDate?.ToString("yyyy-MM-dd"))" class="form-control form-control-crm" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label-crm small">End Date</label>
+                <input type="date" name="endDate" value="@(Model.EndDate?.ToString("yyyy-MM-dd"))" class="form-control form-control-crm" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label-crm small">Team Member Scope</label>
+                <select name="selectedUser" class="form-select form-select-crm">
+                    <option value="">All Team Members</option>
+                    @if (ViewBag.TeamUsers != null)
+                    {
+                        foreach (var u in (List<ApplicationUser>)ViewBag.TeamUsers)
+                        {
+                            <option value="@u.Id" selected="@(Model.SelectedUser == u.Id)">@u.FullName</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end gap-2" style="padding-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary-crm w-100 justify-content-center">
+                    <i class="bi bi-funnel"></i> Apply
+                </button>
+                <a asp-action="Index" asp-route-type="@activeReport" class="btn btn-secondary-crm">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Navigation Tabs for the 6 Reports -->
+<div class="d-flex gap-2 overflow-auto pb-2 mb-4">
+    <a asp-action="Index" asp-route-type="pipeline" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+       class="btn btn-sm @(activeReport == "pipeline" ? "btn-primary" : "btn-light border") px-3 rounded-pill fw-semibold">
+        <i class="bi bi-cash-stack me-1"></i> Sales Pipeline Report
+    </a>
+    <a asp-action="Index" asp-route-type="leads" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+       class="btn btn-sm @(activeReport == "leads" ? "btn-primary" : "btn-light border") px-3 rounded-pill fw-semibold">
+        <i class="bi bi-funnel me-1"></i> Lead Conversion Report
+    </a>
+    <a asp-action="Index" asp-route-type="customers" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+       class="btn btn-sm @(activeReport == "customers" ? "btn-primary" : "btn-light border") px-3 rounded-pill fw-semibold">
+        <i class="bi bi-people me-1"></i> Customer Portfolio Report
+    </a>
+    <a asp-action="Index" asp-route-type="followups" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+       class="btn btn-sm @(activeReport == "followups" ? "btn-primary" : "btn-light border") px-3 rounded-pill fw-semibold">
+        <i class="bi bi-calendar-check me-1"></i> Follow-Up Activity Report
+    </a>
+    <a asp-action="Index" asp-route-type="activities" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+       class="btn btn-sm @(activeReport == "activities" ? "btn-primary" : "btn-light border") px-3 rounded-pill fw-semibold">
+        <i class="bi bi-clock-history me-1"></i> User Activity Report
+    </a>
+    @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+    {
+        <a asp-action="Index" asp-route-type="audit" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+           class="btn btn-sm @(activeReport == "audit" ? "btn-primary" : "btn-light border") px-3 rounded-pill fw-semibold">
+            <i class="bi bi-shield-check me-1"></i> Audit Compliance Report
+        </a>
+    }
+</div>
+
+<!-- Report Content Body -->
+@if (activeReport == "pipeline")
+{
+    <!-- Pipeline Summary Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+                <div class="text-muted small fw-bold text-uppercase">Total Active Pipeline</div>
+                <div class="fs-3 fw-bold text-primary">$@Model.TotalPipelineValue.ToString("N0")</div>
+                <small class="text-muted">Unweighted Contract Sum</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+                <div class="text-muted small fw-bold text-uppercase">Weighted Pipeline Forecast</div>
+                <div class="fs-3 fw-bold text-indigo">$@Model.TotalWeightedPipeline.ToString("N0")</div>
+                <small class="text-muted">Risk & Probability Adjusted</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+                <div class="text-muted small fw-bold text-uppercase">Total Closed Revenue</div>
+                <div class="fs-3 fw-bold text-success">$@Model.TotalRevenueWon.ToString("N0")</div>
+                <small class="text-muted">Executed Contracts Won</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="crm-card">
+                <div class="crm-card-header">
+                    <h5 class="crm-card-title">Stage-Wise Pipeline Breakdown</h5>
+                </div>
+                <div class="crm-card-body">
+                    <div style="height: 280px; position: relative;">
+                        <canvas id="reportStageChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="crm-card">
+                <div class="crm-card-header">
+                    <h5 class="crm-card-title">Owner-Wise Pipeline Distribution</h5>
+                </div>
+                <div class="crm-card-body">
+                    <div style="height: 280px; position: relative;">
+                        <canvas id="reportOwnerChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pipeline Deals Table -->
+    <div class="crm-card">
+        <div class="crm-card-header">
+            <h5 class="crm-card-title">Sales Pipeline Opportunities Ledger</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table crm-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Deal Name</th>
+                        <th>Customer</th>
+                        <th>Stage</th>
+                        <th>Probability</th>
+                        <th>Amount</th>
+                        <th>Weighted Forecast</th>
+                        <th>Expected Close</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in Model.OpportunitiesData)
+                    {
+                        <tr>
+                            <td class="fw-bold text-dark">@o.OpportunityName</td>
+                            <td>@(o.Customer?.CustomerName ?? "Prospective")</td>
+                            <td>
+                                <span class="badge-crm @(o.Stage == "Won" ? "badge-won" : o.Stage == "Lost" ? "badge-lost" : "badge-proposal")">@o.Stage</span>
+                            </td>
+                            <td>@o.Probability%</td>
+                            <td class="fw-bold text-dark">$@o.Amount.ToString("N0")</td>
+                            <td class="text-muted">$@o.WeightedAmount.ToString("N0")</td>
+                            <td>@o.ExpectedCloseDate.ToString("MMM dd, yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else if (activeReport == "leads")
+{
+    <!-- Lead Report -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+                <div class="text-muted small fw-bold text-uppercase">Total Leads Captured</div>
+                <div class="fs-3 fw-bold text-dark">@Model.TotalLeadsCount</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+                <div class="text-muted small fw-bold text-uppercase">Conversion Rate</div>
+                <div class="fs-3 fw-bold text-success">@Model.LeadConversionRate%</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+                <div class="text-muted small fw-bold text-uppercase">Total Lead Pipeline Value</div>
+                <div class="fs-3 fw-bold text-primary">$@Model.LeadsData.Sum(l => l.ExpectedValue).ToString("N0")</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="crm-card mb-4">
+        <div class="crm-card-header">
+            <h5 class="crm-card-title">Lead Acquisition Channel Distribution</h5>
+        </div>
+        <div class="crm-card-body">
+            <div style="height: 280px; position: relative;">
+                <canvas id="reportLeadSourceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="crm-card">
+        <div class="crm-card-header">
+            <h5 class="crm-card-title">Leads Registry Detail</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table crm-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Lead Code</th>
+                        <th>Lead Name</th>
+                        <th>Company</th>
+                        <th>Source</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Est. Value</th>
+                        <th>Created Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var l in Model.LeadsData)
+                    {
+                        <tr>
+                            <td><span class="badge bg-light text-primary border">@l.LeadCode</span></td>
+                            <td class="fw-bold text-dark">@l.LeadName</td>
+                            <td>@(l.CompanyName ?? "Individual")</td>
+                            <td><span class="badge bg-light text-secondary border">@l.Source</span></td>
+                            <td><span class="badge-crm badge-qualified">@l.Status</span></td>
+                            <td><span class="badge-crm badge-high">@l.Priority</span></td>
+                            <td class="fw-bold text-dark">$@l.ExpectedValue.ToString("N0")</td>
+                            <td>@l.CreatedDate.ToString("MMM dd, yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else if (activeReport == "customers")
+{
+    <!-- Customer Report -->
+    <div class="crm-card">
+        <div class="crm-card-header">
+            <h5 class="crm-card-title">Customer Master Registry Report (@Model.CustomersData.Count Accounts)</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table crm-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Customer Code</th>
+                        <th>Contact Name</th>
+                        <th>Company</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Creation Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.CustomersData)
+                    {
+                        <tr>
+                            <td><span class="badge bg-light text-primary border">@c.CustomerCode</span></td>
+                            <td class="fw-bold text-dark">@c.CustomerName</td>
+                            <td>@(c.CompanyName ?? "Independent")</td>
+                            <td>@c.Email</td>
+                            <td>@c.Phone</td>
+                            <td>@(!string.IsNullOrEmpty(c.City) ? $"{c.City}, {c.State}" : "—")</td>
+                            <td><span class="badge-crm @(c.Status == "Active" ? "badge-active" : "badge-inactive")">@c.Status</span></td>
+                            <td>@c.CreatedDate.ToString("MMM dd, yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else if (activeReport == "followups")
+{
+    <!-- Follow-Up Report -->
+    <div class="crm-card">
+        <div class="crm-card-header">
+            <h5 class="crm-card-title">Follow-Up Engagements Summary (@Model.FollowUpsData.Count Total)</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table crm-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Subject</th>
+                        <th>Related Entity</th>
+                        <th>Scheduled Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var f in Model.FollowUpsData)
+                    {
+                        <tr>
+                            <td><span class="badge bg-light text-dark border">@f.FollowUpType</span></td>
+                            <td class="fw-bold text-dark">@f.Subject</td>
+                            <td>@f.RelatedType</td>
+                            <td>@f.FollowUpDate.ToString("MMM dd, yyyy - hh:mm tt")</td>
+                            <td><span class="badge-crm @(f.Status == "Completed" ? "badge-won" : "badge-new")">@f.Status</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else if (activeReport == "activities")
+{
+    <!-- User Activity Report -->
+    <div class="crm-card">
+        <div class="crm-card-header">
+            <h5 class="crm-card-title">User Activity & Task Log (@Model.ActivitiesData.Count Entries)</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table crm-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Subject</th>
+                        <th>Description</th>
+                        <th>Date & Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model.ActivitiesData)
+                    {
+                        <tr>
+                            <td><span class="badge bg-light text-secondary border">@a.ActivityType</span></td>
+                            <td class="fw-bold text-dark">@a.Subject</td>
+                            <td class="small text-secondary">@a.Description</td>
+                            <td>@a.ActivityDate.ToString("MMM dd, yyyy - hh:mm tt")</td>
+                            <td><span class="badge-crm badge-active">@a.Status</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else if (activeReport == "audit")
+{
+    <!-- Audit Report -->
+    <div class="crm-card">
+        <div class="crm-card-header">
+            <h5 class="crm-card-title">Compliance & Security Audit Log (@Model.AuditLogsData.Count Events)</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table crm-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Timestamp (UTC)</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Module</th>
+                        <th>Record ID</th>
+                        <th>Result</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var l in Model.AuditLogsData)
+                    {
+                        <tr>
+                            <td class="small text-muted">@l.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td class="fw-semibold text-dark">@l.UserName</td>
+                            <td><span class="badge bg-light text-dark border">@l.Action</span></td>
+                            <td><span class="badge bg-primary-subtle text-primary">@l.EntityName</span></td>
+                            <td><code>@(l.RecordId ?? "—")</code></td>
+                            <td>
+                                <span class="badge @(l.Result == "Success" ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
+                                    @l.Result
+                                </span>
+                            </td>
+                            <td class="small text-secondary">@l.Details</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        @if (activeReport == "pipeline")
+        {
+            <text>
+            // Stage Bar Chart
+            const stageCtx = document.getElementById('reportStageChart')?.getContext('2d');
+            if (stageCtx) {
+                new Chart(stageCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: @Html.Raw(JsonSerializer.Serialize(Model.PipelineStageNames)),
+                        datasets: [{
+                            label: 'Pipeline Amount ($)',
+                            data: @Html.Raw(JsonSerializer.Serialize(Model.PipelineStageAmounts)),
+                            backgroundColor: ['#3b82f6', '#f59e0b', '#ea580c', '#10b981', '#ef4444'],
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            // Owner Bar Chart
+            const ownerCtx = document.getElementById('reportOwnerChart')?.getContext('2d');
+            if (ownerCtx) {
+                new Chart(ownerCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: @Html.Raw(JsonSerializer.Serialize(Model.OwnerNames)),
+                        datasets: [{
+                            data: @Html.Raw(JsonSerializer.Serialize(Model.OwnerPipelineAmounts)),
+                            backgroundColor: ['#4f46e5', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+            </text>
+        }
+        else if (activeReport == "leads")
+        {
+            <text>
+            const leadSourceCtx = document.getElementById('reportLeadSourceChart')?.getContext('2d');
+            if (leadSourceCtx) {
+                new Chart(leadSourceCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: @Html.Raw(JsonSerializer.Serialize(Model.LeadSources)),
+                        datasets: [{
+                            data: @Html.Raw(JsonSerializer.Serialize(Model.LeadSourceCounts)),
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#9333ea', '#06b6d4']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right' } }
+                    }
+                });
+            }
+            </text>
+        }
+    });
+</script>
+}

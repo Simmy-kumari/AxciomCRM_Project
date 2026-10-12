@@ -1,0 +1,291 @@
+@model AcxiomCRM.ViewModels.OpportunityListViewModel
+@{
+    ViewData["Title"] = "Opportunities & Pipeline";
+    string viewMode = Model.ViewMode;
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1 tracking-tight">Sales Opportunities</h2>
+        <p class="text-muted small mb-0">Pipeline forecasting, stage velocity, and deal management.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <!-- View Toggle (Kanban vs Table) -->
+        <div class="btn-group bg-white border shadow-sm rounded" role="group">
+            <a asp-action="Index" asp-route-view="kanban" asp-route-searchTerm="@Model.SearchTerm"
+               class="btn btn-sm @(viewMode == "kanban" ? "btn-primary" : "btn-light text-secondary") fw-semibold px-3">
+                <i class="bi bi-kanban me-1"></i> Kanban Board
+            </a>
+            <a asp-action="Index" asp-route-view="table" asp-route-searchTerm="@Model.SearchTerm"
+               class="btn btn-sm @(viewMode == "table" ? "btn-primary" : "btn-light text-secondary") fw-semibold px-3">
+                <i class="bi bi-table me-1"></i> Table View
+            </a>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary-crm shadow-sm">
+            <i class="bi bi-plus-lg"></i>
+            <span>Create Deal</span>
+        </a>
+    </div>
+</div>
+
+<!-- Pipeline Summary Metric Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Total Active Pipeline</div>
+                    <div class="fs-4 fw-bold text-primary">$@Model.TotalPipelineValue.ToString("N0")</div>
+                    <small class="text-muted">@Model.OpenDealsCount Active Deals</small>
+                </div>
+                <div class="p-2 rounded bg-primary-subtle text-primary fs-3"><i class="bi bi-cash-stack"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Weighted Forecast</div>
+                    <div class="fs-4 fw-bold text-dark">$@Model.WeightedPipelineValue.ToString("N0")</div>
+                    <small class="text-muted">Probability Adjusted</small>
+                </div>
+                <div class="p-2 rounded bg-indigo-subtle text-indigo fs-3"><i class="bi bi-calculator"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Closed Won Deals</div>
+                    <div class="fs-4 fw-bold text-success">$@Model.WonPipelineValue.ToString("N0")</div>
+                    <small class="text-muted">@Model.WonDealsCount Deals Won</small>
+                </div>
+                <div class="p-2 rounded bg-success-subtle text-success fs-3"><i class="bi bi-trophy"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Closed Lost</div>
+                    <div class="fs-4 fw-bold text-danger">$@Model.LostPipelineValue.ToString("N0")</div>
+                    <small class="text-muted">Closed without win</small>
+                </div>
+                <div class="p-2 rounded bg-danger-subtle text-danger fs-3"><i class="bi bi-x-circle"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (viewMode == "kanban")
+{
+    <!-- Kanban Board View -->
+    <div class="kanban-board-container mb-4">
+        
+        <!-- Column 1: Qualification -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <div class="kanban-column-title">
+                    <span class="badge rounded-circle bg-primary text-white" style="width: 22px; height: 22px; font-size: 0.75rem; display: flex; align-items: center; justify-content: center;">
+                        @Model.QualificationDeals.Count
+                    </span>
+                    <span>Qualification</span>
+                </div>
+                <div class="kanban-column-sum">$@Model.QualificationDeals.Sum(d => d.Amount).ToString("N0")</div>
+            </div>
+            <div class="kanban-card-list">
+                @foreach (var deal in Model.QualificationDeals)
+                {
+                    <partial name="_OpportunityCard" model="deal" />
+                }
+            </div>
+        </div>
+
+        <!-- Column 2: Proposal -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <div class="kanban-column-title">
+                    <span class="badge rounded-circle bg-warning text-dark" style="width: 22px; height: 22px; font-size: 0.75rem; display: flex; align-items: center; justify-content: center;">
+                        @Model.ProposalDeals.Count
+                    </span>
+                    <span>Proposal</span>
+                </div>
+                <div class="kanban-column-sum">$@Model.ProposalDeals.Sum(d => d.Amount).ToString("N0")</div>
+            </div>
+            <div class="kanban-card-list">
+                @foreach (var deal in Model.ProposalDeals)
+                {
+                    <partial name="_OpportunityCard" model="deal" />
+                }
+            </div>
+        </div>
+
+        <!-- Column 3: Negotiation -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <div class="kanban-column-title">
+                    <span class="badge rounded-circle bg-danger text-white" style="width: 22px; height: 22px; font-size: 0.75rem; display: flex; align-items: center; justify-content: center;">
+                        @Model.NegotiationDeals.Count
+                    </span>
+                    <span>Negotiation</span>
+                </div>
+                <div class="kanban-column-sum">$@Model.NegotiationDeals.Sum(d => d.Amount).ToString("N0")</div>
+            </div>
+            <div class="kanban-card-list">
+                @foreach (var deal in Model.NegotiationDeals)
+                {
+                    <partial name="_OpportunityCard" model="deal" />
+                }
+            </div>
+        </div>
+
+        <!-- Column 4: Won -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <div class="kanban-column-title">
+                    <span class="badge rounded-circle bg-success text-white" style="width: 22px; height: 22px; font-size: 0.75rem; display: flex; align-items: center; justify-content: center;">
+                        @Model.WonDeals.Count
+                    </span>
+                    <span class="text-success">Closed Won</span>
+                </div>
+                <div class="kanban-column-sum text-success fw-bold">$@Model.WonDeals.Sum(d => d.Amount).ToString("N0")</div>
+            </div>
+            <div class="kanban-card-list">
+                @foreach (var deal in Model.WonDeals)
+                {
+                    <partial name="_OpportunityCard" model="deal" />
+                }
+            </div>
+        </div>
+
+        <!-- Column 5: Lost -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <div class="kanban-column-title">
+                    <span class="badge rounded-circle bg-secondary text-white" style="width: 22px; height: 22px; font-size: 0.75rem; display: flex; align-items: center; justify-content: center;">
+                        @Model.LostDeals.Count
+                    </span>
+                    <span class="text-danger">Closed Lost</span>
+                </div>
+                <div class="kanban-column-sum">$@Model.LostDeals.Sum(d => d.Amount).ToString("N0")</div>
+            </div>
+            <div class="kanban-card-list">
+                @foreach (var deal in Model.LostDeals)
+                {
+                    <partial name="_OpportunityCard" model="deal" />
+                }
+            </div>
+        </div>
+
+    </div>
+}
+else
+{
+    <!-- Table View -->
+    <div class="crm-card mb-4">
+        <div class="p-3">
+            <form method="get" asp-action="Index" class="row g-2 align-items-center">
+                <input type="hidden" name="view" value="table" />
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                        <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control border-start-0 shadow-none" 
+                               placeholder="Search deals by name or customer..." />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="stageFilter" class="form-select shadow-none">
+                        <option value="">All Stages</option>
+                        <option value="Qualification" selected="@(Model.StageFilter == "Qualification")">Qualification</option>
+                        <option value="Proposal" selected="@(Model.StageFilter == "Proposal")">Proposal</option>
+                        <option value="Negotiation" selected="@(Model.StageFilter == "Negotiation")">Negotiation</option>
+                        <option value="Won" selected="@(Model.StageFilter == "Won")">Won</option>
+                        <option value="Lost" selected="@(Model.StageFilter == "Lost")">Lost</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary-crm w-100 justify-content-center">Filter</button>
+                    <a asp-action="Index" asp-route-view="table" class="btn btn-secondary-crm">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table crm-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Deal Name</th>
+                        <th>Customer / Company</th>
+                        <th>Stage</th>
+                        <th>Probability</th>
+                        <th>Deal Amount</th>
+                        <th>Weighted Forecast</th>
+                        <th>Expected Close</th>
+                        <th>Owner</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var opp in Model.Opportunities)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@opp.OpportunityId" class="fw-bold text-dark text-decoration-none hover-primary">
+                                    @opp.OpportunityName
+                                </a>
+                            </td>
+                            <td>
+                                <div class="text-dark fw-medium">@(opp.CustomerName ?? "Prospective Deal")</div>
+                                <small class="text-muted">@(opp.CompanyName ?? "Direct")</small>
+                            </td>
+                            <td>
+                                <span class="badge-crm @(opp.Stage == "Won" ? "badge-won" : opp.Stage == "Lost" ? "badge-lost" : opp.Stage == "Negotiation" ? "badge-negotiation" : opp.Stage == "Proposal" ? "badge-proposal" : "badge-new")">
+                                    @opp.Stage
+                                </span>
+                            </td>
+                            <td>
+                                <span class="small fw-bold">@opp.Probability%</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">$@opp.Amount.ToString("N0")</div>
+                            </td>
+                            <td>
+                                <div class="text-muted small">$@opp.WeightedAmount.ToString("N0")</div>
+                            </td>
+                            <td>
+                                <small class="text-muted">@opp.ExpectedCloseDate.ToString("MMM dd, yyyy")</small>
+                            </td>
+                            <td>
+                                <small class="text-dark fw-medium">@opp.OwnerName</small>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <a asp-action="Details" asp-route-id="@opp.OpportunityId" class="btn btn-sm btn-light border" title="Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@opp.OpportunityId" class="btn btn-sm btn-light border" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-light border text-danger" 
+                                            data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"
+                                            data-action="@Url.Action("Delete", "Opportunities", new { id = opp.OpportunityId })"
+                                            data-name="@opp.OpportunityName" data-type="Opportunity Deal"
+                                            title="Delete Deal">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

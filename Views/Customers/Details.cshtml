@@ -1,0 +1,254 @@
+@model AcxiomCRM.ViewModels.CustomerDetailsViewModel
+@{
+    var cust = Model.Customer;
+    ViewData["Title"] = $"{cust.CustomerName} — Customer Profile";
+    var initials = !string.IsNullOrEmpty(cust.CustomerName) 
+        ? string.Join("", cust.CustomerName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => s[0])).ToUpper() 
+        : "CU";
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <a asp-action="Index" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-1">
+            <i class="bi bi-arrow-left"></i> Back to Customers
+        </a>
+        <div class="d-flex align-items-center gap-3">
+            <h2 class="fw-bold text-dark mb-0">@cust.CustomerName</h2>
+            <span class="badge-crm @(cust.Status == "Active" ? "badge-active" : "badge-inactive")">
+                @cust.Status
+            </span>
+            <span class="badge bg-light text-secondary border">@cust.CustomerCode</span>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@cust.CustomerId" class="btn btn-secondary-crm">
+            <i class="bi bi-pencil"></i> Edit Account
+        </a>
+        <a asp-controller="Opportunities" asp-action="Create" class="btn btn-primary-crm">
+            <i class="bi bi-plus-lg"></i> New Deal
+        </a>
+    </div>
+</div>
+
+<!-- Header Info Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100" style="border-radius: var(--crm-radius);">
+            <div class="text-muted small fw-bold text-uppercase mb-2">Company / Enterprise</div>
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-building fs-4 text-primary"></i>
+                <div>
+                    <div class="fw-bold text-dark">@(cust.CompanyName ?? "Independent Account")</div>
+                    <small class="text-muted">@(!string.IsNullOrEmpty(cust.City) ? $"{cust.City}, {cust.State}" : "Location not specified")</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100" style="border-radius: var(--crm-radius);">
+            <div class="text-muted small fw-bold text-uppercase mb-2">Contact Channels</div>
+            <div class="small mb-1"><i class="bi bi-envelope text-muted me-2"></i><a href="mailto:@cust.Email" class="text-dark text-decoration-none">@cust.Email</a></div>
+            <div class="small"><i class="bi bi-telephone text-muted me-2"></i><span class="text-dark">@cust.Phone</span></div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100" style="border-radius: var(--crm-radius);">
+            <div class="text-muted small fw-bold text-uppercase mb-2">Account Ownership</div>
+            <div class="d-flex align-items-center gap-2">
+                <div class="user-avatar-sm" style="width: 32px; height: 32px; font-size: 0.8rem; margin: 0;">AE</div>
+                <div>
+                    <div class="fw-bold text-dark" style="font-size: 0.88rem;">@Model.OwnerName</div>
+                    <small class="text-muted">Account Manager &bull; Created @cust.CreatedDate.ToString("MMM dd, yyyy")</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabbed Modules: Opportunities, Follow-Ups, Activities, Notes -->
+<div class="crm-card mb-4">
+    <div class="crm-card-header p-0 px-3 bg-light border-bottom">
+        <ul class="nav nav-tabs border-0" id="customerTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active py-3 fw-semibold text-dark border-0 border-bottom border-primary border-3 bg-transparent" 
+                        id="deals-tab" data-bs-toggle="tab" data-bs-target="#deals" type="button" role="tab">
+                    <i class="bi bi-briefcase me-1"></i> Associated Deals (@Model.Opportunities.Count)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link py-3 fw-semibold text-secondary border-0 bg-transparent" 
+                        id="followups-tab" data-bs-toggle="tab" data-bs-target="#followups" type="button" role="tab">
+                    <i class="bi bi-calendar-check me-1"></i> Follow-Ups (@Model.FollowUps.Count)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link py-3 fw-semibold text-secondary border-0 bg-transparent" 
+                        id="activities-tab" data-bs-toggle="tab" data-bs-target="#activities" type="button" role="tab">
+                    <i class="bi bi-clock-history me-1"></i> Activity History (@Model.Activities.Count)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link py-3 fw-semibold text-secondary border-0 bg-transparent" 
+                        id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes" type="button" role="tab">
+                    <i class="bi bi-sticky me-1"></i> Strategy Notes
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <div class="crm-card-body p-4">
+        <div class="tab-content" id="customerTabContent">
+            
+            <!-- Tab 1: Deals -->
+            <div class="tab-pane fade show active" id="deals" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-dark mb-0">Sales Opportunities</h6>
+                    <a asp-controller="Opportunities" asp-action="Create" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-plus-lg"></i> Create Deal
+                    </a>
+                </div>
+
+                @if (Model.Opportunities.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table crm-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Deal Name</th>
+                                    <th>Stage</th>
+                                    <th>Probability</th>
+                                    <th>Amount</th>
+                                    <th>Weighted</th>
+                                    <th>Expected Close</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var opp in Model.Opportunities)
+                                {
+                                    <tr>
+                                        <td class="fw-bold text-dark">@opp.OpportunityName</td>
+                                        <td>
+                                            <span class="badge-crm @(opp.Stage == "Won" ? "badge-won" : opp.Stage == "Lost" ? "badge-lost" : opp.Stage == "Negotiation" ? "badge-negotiation" : "badge-new")">
+                                                @opp.Stage
+                                            </span>
+                                        </td>
+                                        <td>@opp.Probability%</td>
+                                        <td class="fw-bold text-dark">$@opp.Amount.ToString("N0")</td>
+                                        <td class="text-muted">$@opp.WeightedAmount.ToString("N0")</td>
+                                        <td>@opp.ExpectedCloseDate.ToString("MMM dd, yyyy")</td>
+                                        <td class="text-end">
+                                            <a asp-controller="Opportunities" asp-action="Details" asp-route-id="@opp.OpportunityId" class="btn btn-sm btn-light border">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-briefcase fs-2 d-block mb-2"></i>
+                        <div>No active opportunities logged for this customer.</div>
+                    </div>
+                }
+            </div>
+
+            <!-- Tab 2: Follow-Ups -->
+            <div class="tab-pane fade" id="followups" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-dark mb-0">Scheduled Follow-Ups</h6>
+                    <a asp-controller="FollowUps" asp-action="Create" asp-route-relatedType="Customer" asp-route-relatedId="@cust.CustomerId" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-plus-lg"></i> Schedule Follow-Up
+                    </a>
+                </div>
+
+                @if (Model.FollowUps.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var fu in Model.FollowUps)
+                        {
+                            <div class="list-group-item p-3 d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="p-2 rounded bg-light border text-primary">
+                                        <i class="bi @(fu.FollowUpType == "Meeting" ? "bi-calendar-event" : "bi-telephone") fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">@fu.Subject</div>
+                                        <small class="text-muted">@fu.FollowUpDate.ToString("MMM dd, yyyy - hh:mm tt") &bull; Type: @fu.FollowUpType</small>
+                                        @if (!string.IsNullOrEmpty(fu.Remarks))
+                                        {
+                                            <div class="small text-secondary mt-1">@fu.Remarks</div>
+                                        }
+                                    </div>
+                                </div>
+                                <span class="badge-crm @(fu.Status == "Completed" ? "badge-won" : "badge-new")">@fu.Status</span>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-calendar-event fs-2 d-block mb-2"></i>
+                        <div>No scheduled follow-ups for this account.</div>
+                    </div>
+                }
+            </div>
+
+            <!-- Tab 3: Activities -->
+            <div class="tab-pane fade" id="activities" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-dark mb-0">Activity Log & History</h6>
+                    <a asp-controller="Activities" asp-action="Create" asp-route-customerId="@cust.CustomerId" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-plus-lg"></i> Log Activity
+                    </a>
+                </div>
+
+                @if (Model.Activities.Any())
+                {
+                    <div class="activity-timeline">
+                        @foreach (var act in Model.Activities)
+                        {
+                            <div class="timeline-item">
+                                <div class="timeline-badge timeline-badge-call">
+                                    <i class="bi bi-clock-history"></i>
+                                </div>
+                                <div class="timeline-content-card">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong class="text-dark">@act.Subject</strong>
+                                        <small class="text-muted">@act.ActivityDate.ToString("MMM dd, yyyy hh:mm tt")</small>
+                                    </div>
+                                    <p class="small text-secondary mb-0">@act.Description</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-clock-history fs-2 d-block mb-2"></i>
+                        <div>No interactions logged yet.</div>
+                    </div>
+                }
+            </div>
+
+            <!-- Tab 4: Notes -->
+            <div class="tab-pane fade" id="notes" role="tabpanel">
+                <div class="card p-3 bg-light border-0" style="border-radius: var(--crm-radius);">
+                    <h6 class="fw-bold text-dark mb-2">Account Notes</h6>
+                    <p class="text-secondary mb-0">
+                        @(string.IsNullOrWhiteSpace(cust.Notes) ? "No notes recorded for this customer account." : cust.Notes)
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

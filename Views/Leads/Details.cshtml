@@ -1,0 +1,171 @@
+@model AcxiomCRM.ViewModels.LeadDetailsViewModel
+@{
+    var lead = Model.Lead;
+    ViewData["Title"] = $"{lead.LeadName} — Lead Details";
+    var statuses = new[] { "New", "Contacted", "Qualified", "Converted" };
+    int currentStep = lead.Status switch
+    {
+        "New" => 0,
+        "Contacted" => 1,
+        "Qualified" => 2,
+        "Converted" => 3,
+        _ => -1
+    };
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <a asp-action="Index" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-1">
+            <i class="bi bi-arrow-left"></i> Back to Leads
+        </a>
+        <div class="d-flex align-items-center gap-3">
+            <h2 class="fw-bold text-dark mb-0">@lead.LeadName</h2>
+            <span class="badge-crm @(lead.Status == "Qualified" ? "badge-qualified" : lead.Status == "Converted" ? "badge-converted" : lead.Status == "Lost" ? "badge-lost" : "badge-new")">
+                @lead.Status
+            </span>
+            <span class="badge bg-light text-secondary border">@lead.LeadCode</span>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        @if (lead.Status != "Converted")
+        {
+            <a asp-action="Convert" asp-route-id="@lead.LeadId" class="btn btn-success fw-semibold shadow-sm d-inline-flex align-items-center gap-1">
+                <i class="bi bi-arrow-repeat"></i> Convert to Customer & Deal
+            </a>
+        }
+        <a asp-action="Edit" asp-route-id="@lead.LeadId" class="btn btn-secondary-crm">
+            <i class="bi bi-pencil"></i> Edit Lead
+        </a>
+    </div>
+</div>
+
+<!-- Lead Pipeline Stage Progression Bar (Section 6) -->
+<div class="crm-card mb-4 p-3 bg-white">
+    <div class="small fw-bold text-muted text-uppercase mb-3">Lead Lifecycle Progression</div>
+    <div class="position-relative m-4">
+        <div class="progress" style="height: 4px;">
+            <div class="progress-bar bg-success" role="progressbar" 
+                 style="width: @(currentStep >= 0 ? (currentStep * 33.33) : 0)%;"></div>
+        </div>
+        <div class="d-flex justify-content-between position-absolute top-50 start-0 w-100 translate-middle-y">
+            @for (int i = 0; i < statuses.Length; i++)
+            {
+                bool isCompleted = currentStep >= i;
+                bool isCurrent = currentStep == i;
+                <div class="text-center" style="transform: translateY(-8px);">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto shadow-sm @(isCompleted ? "bg-success text-white" : "bg-light border text-muted")"
+                         style="width: 32px; height: 32px; font-size: 0.85rem; font-weight: 700;">
+                        @if (isCompleted && !isCurrent)
+                        {
+                            <i class="bi bi-check-lg"></i>
+                        }
+                        else
+                        {
+                            @(i + 1)
+                        }
+                    </div>
+                    <div class="small fw-bold mt-2 @(isCurrent ? "text-success" : "text-muted")" style="font-size: 0.78rem;">
+                        @statuses[i]
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Contact & Conversion Status -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100" style="border-radius: var(--crm-radius);">
+            <div class="text-muted small fw-bold text-uppercase mb-2">Company & Source</div>
+            <div class="fw-bold text-dark fs-6 mb-1">@(lead.CompanyName ?? "Individual Prospect")</div>
+            <div class="d-flex gap-2">
+                <span class="badge bg-light text-secondary border">Source: @lead.Source</span>
+                <span class="badge-crm @(lead.Priority == "High" ? "badge-high" : "badge-medium")">Priority: @lead.Priority</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100" style="border-radius: var(--crm-radius);">
+            <div class="text-muted small fw-bold text-uppercase mb-2">Contact Details</div>
+            <div class="small mb-1"><i class="bi bi-envelope text-muted me-2"></i>@lead.Email</div>
+            <div class="small"><i class="bi bi-telephone text-muted me-2"></i>@lead.Phone</div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100" style="border-radius: var(--crm-radius);">
+            <div class="text-muted small fw-bold text-uppercase mb-2">Deal Potential</div>
+            <div class="fs-4 fw-bold text-primary mb-1">$@lead.ExpectedValue.ToString("N0")</div>
+            <small class="text-muted">Assigned to: <strong class="text-dark">@Model.AssignedToName</strong></small>
+        </div>
+    </div>
+</div>
+
+@if (lead.Status == "Converted")
+{
+    <div class="alert alert-success border-0 shadow-sm d-flex align-items-center justify-content-between p-3 mb-4" style="background-color: #ecfdf5; border-left: 4px solid #10b981 !important;">
+        <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-check-circle-fill fs-3 text-success"></i>
+            <div>
+                <strong class="text-success-emphasis">Lead Successfully Converted!</strong>
+                <div class="text-secondary small">This prospect has graduated into a customer account and/or pipeline opportunity.</div>
+            </div>
+        </div>
+        @if (Model.ConvertedCustomer != null)
+        {
+            <a asp-controller="Customers" asp-action="Details" asp-route-id="@Model.ConvertedCustomer.CustomerId" class="btn btn-sm btn-success">
+                View Customer: @Model.ConvertedCustomer.CustomerName
+            </a>
+        }
+    </div>
+}
+
+<!-- Follow-Ups and Activity History -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="crm-card h-100">
+            <div class="crm-card-header">
+                <h6 class="crm-card-title">Scheduled Follow-Ups</h6>
+                <a asp-controller="FollowUps" asp-action="Create" asp-route-relatedType="Lead" asp-route-relatedId="@lead.LeadId" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus"></i> Schedule
+                </a>
+            </div>
+            <div class="crm-card-body p-0">
+                @if (Model.FollowUps.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var fu in Model.FollowUps)
+                        {
+                            <div class="list-group-item p-3 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold text-dark">@fu.Subject</div>
+                                    <small class="text-muted">@fu.FollowUpDate.ToString("MMM dd, yyyy - hh:mm tt") &bull; @fu.FollowUpType</small>
+                                </div>
+                                <span class="badge-crm @(fu.Status == "Completed" ? "badge-won" : "badge-new")">@fu.Status</span>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="p-4 text-center text-muted small">No follow-ups scheduled for this lead.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="crm-card h-100">
+            <div class="crm-card-header">
+                <h6 class="crm-card-title">Notes & Strategy</h6>
+            </div>
+            <div class="crm-card-body">
+                <p class="text-secondary small mb-0">
+                    @(string.IsNullOrWhiteSpace(lead.Notes) ? "No notes recorded for this lead yet." : lead.Notes)
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

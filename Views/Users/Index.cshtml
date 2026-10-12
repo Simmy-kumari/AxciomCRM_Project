@@ -1,0 +1,176 @@
+@model AcxiomCRM.ViewModels.UserListViewModel
+@{
+    ViewData["Title"] = "User & Role Administration";
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1 tracking-tight">User & Role Management</h2>
+        <p class="text-muted small mb-0">Identity administration, role provisioning, security lockouts, and permissions.</p>
+    </div>
+    @if (User.IsInRole("Admin"))
+    {
+        <div class="d-flex align-items-center gap-2">
+            <a asp-action="Create" class="btn btn-primary-crm shadow-sm">
+                <i class="bi bi-person-plus-fill"></i>
+                <span>Register User</span>
+            </a>
+        </div>
+    }
+</div>
+
+<!-- Summary Quick Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Total System Users</div>
+                    <div class="fs-4 fw-bold text-dark">@Model.TotalUsers</div>
+                </div>
+                <div class="p-2 rounded bg-primary-subtle text-primary fs-4"><i class="bi bi-people"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Active Accounts</div>
+                    <div class="fs-4 fw-bold text-success">@Model.ActiveUsers</div>
+                </div>
+                <div class="p-2 rounded bg-success-subtle text-success fs-4"><i class="bi bi-check-circle"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--crm-radius);">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Locked Out</div>
+                    <div class="fs-4 fw-bold text-danger">@Model.LockedUsers</div>
+                </div>
+                <div class="p-2 rounded bg-danger-subtle text-danger fs-4"><i class="bi bi-shield-lock"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Role Filter -->
+<div class="crm-card mb-4">
+    <div class="p-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control border-start-0 shadow-none" 
+                           placeholder="Search users by name, email, or department..." />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="roleFilter" class="form-select shadow-none">
+                    <option value="">All Roles</option>
+                    <option value="Admin" selected="@(Model.RoleFilter == "Admin")">Administrator</option>
+                    <option value="Manager" selected="@(Model.RoleFilter == "Manager")">Sales Manager</option>
+                    <option value="SalesExecutive" selected="@(Model.RoleFilter == "SalesExecutive")">Sales Executive</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary-crm w-100 justify-content-center">Filter</button>
+                <a asp-action="Index" class="btn btn-secondary-crm">Clear</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    <div class="table-responsive">
+        <table class="table crm-table align-middle">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email Address</th>
+                    <th>Role</th>
+                    <th>Department</th>
+                    <th>Account Status</th>
+                    <th>Security / Lockout</th>
+                    <th>Created</th>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <th class="text-end">Actions</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model.Users)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="user-avatar-sm" style="width: 34px; height: 34px; font-size: 0.82rem; margin: 0;">
+                                    @(u.FullName.Substring(0, 1))
+                                </div>
+                                <div class="fw-bold text-dark">@u.FullName</div>
+                            </div>
+                        </td>
+                        <td>@u.Email</td>
+                        <td>
+                            <span class="badge @(u.Role == "Admin" ? "bg-danger-subtle text-danger" : u.Role == "Manager" ? "bg-primary-subtle text-primary" : "bg-info-subtle text-info") fw-semibold px-2 py-1">
+                                <i class="bi @(u.Role == "Admin" ? "bi-shield-check" : u.Role == "Manager" ? "bi-pie-chart" : "bi-person") me-1"></i>
+                                @u.Role
+                            </span>
+                        </td>
+                        <td>@(u.Department ?? "General")</td>
+                        <td>
+                            <span class="badge-crm @(u.IsActive ? "badge-active" : "badge-inactive")">
+                                @(u.IsActive ? "Active" : "Deactivated")
+                            </span>
+                        </td>
+                        <td>
+                            @if (u.IsLockedOut)
+                            {
+                                <span class="badge bg-danger text-white">
+                                    <i class="bi bi-lock-fill me-1"></i> Locked Out
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-secondary border">Normal (@u.AccessFailedCount fails)</span>
+                            }
+                        </td>
+                        <td>
+                            <small class="text-muted">@u.CreatedDate.ToString("MMM dd, yyyy")</small>
+                        </td>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-light border" title="Edit Profile">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+                                    <form asp-action="ToggleStatus" asp-route-id="@u.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-light border @(u.IsActive ? "text-warning" : "text-success")" 
+                                                title="@(u.IsActive ? "Deactivate Account" : "Activate Account")">
+                                            <i class="bi @(u.IsActive ? "bi-pause-circle" : "bi-play-circle")"></i>
+                                        </button>
+                                    </form>
+
+                                    @if (u.IsLockedOut)
+                                    {
+                                        <form asp-action="Unlock" asp-route-id="@u.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-success" title="Unlock Account">
+                                                <i class="bi bi-unlock"></i> Unlock
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
